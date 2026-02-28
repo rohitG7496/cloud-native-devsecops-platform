@@ -1,0 +1,25 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: tradein
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      NodeSelector:
+        node: app
+      containers:
+        - name: frontend
+          image:
+          imagePullSecrets:
+            - name: ecr-cred
+          ports:
+            - containerPort: 3000
