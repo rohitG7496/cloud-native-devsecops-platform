@@ -39,7 +39,7 @@ You can observe the Karpenter controller logs to see it actively provisioning no
 ```bash
 kubectl logs -f -n karpenter -l app.kubernetes.io/name=karpenter -c controller
 ```
-![Karpenter Scaling Logs](K8S/images/karpenter-scaling-logs.png)
+![Karpenter Scaling Logs](<K8S /images/karpenter-scaling-logs.png>)
 
 ### Scaled Nodes and Pods
 Check the available nodes to see the newly provisioned instances joining the cluster. Then, verify that the pending pods are successfully scheduled and running on these new worker nodes:
@@ -47,4 +47,4 @@ Check the available nodes to see the newly provisioned instances joining the clu
 kubectl get nodes
 kubectl get po -n default -o wide
 ```
-![Scaled Nodes and Pods](K8S/images/scaled-nodes-pods.png)
+![Scaled Nodes and Pods](<K8S /images/scaled-nodes-pods.png>)
