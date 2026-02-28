@@ -3,6 +3,44 @@ This Project demonstrates production-grade Cloud Native DevSecOps platform with 
 
 # Karpenter setup on Kubeadm Cluster
 
+> **Note:** Previously, Karpenter was not officially supported on non-EKS clusters, but it now has **full support for self-managed Kubeadm clusters**.
+
+## Karpenter Controller IAM Policy
+To allow the Karpenter controller to provision nodes, you must attach the following IAM policy to your Kubeadm master node's IAM role:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Karpenter",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateFleet",
+                "ec2:CreateLaunchTemplate",
+                "ec2:CreateTags",
+                "ec2:DeleteLaunchTemplate",
+                "ec2:DescribeAvailabilityZones",
+                "ec2:DescribeImages",
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstanceTypeOfferings",
+                "ec2:DescribeInstanceTypes",
+                "ec2:DescribeLaunchTemplates",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSpotPriceHistory",
+                "ec2:DescribeSubnets",
+                "ec2:RunInstances",
+                "ec2:TerminateInstances",
+                "ssm:GetParameter",
+                "iam:PassRole",
+                "pricing:GetProducts"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
 ## Setup Environment Variables for Karpenter
 ```
 export CLUSTER_NAME="<YOUR-ClUSTER-NAME>"
