@@ -6,14 +6,16 @@ metadata:
 spec:
   subnetSelectorTerms:
     - tags:
-        karpenter.sh/discovery: <cluster-name>
+        karpenter.sh/discovery: "<cluster-name>"
   securityGroupSelectorTerms:
     - tags:
-        karpenter.sh/discovery: <cluster-name>
-  amiFamily: custom
+        karpenter.sh/discovery: "<cluster-name>"
+    - name: security-group-id
+    - id: "<security-group-id>"
+  amiFamily: Custom
   amiSelectorTerms:
-    - id: ami-02225abf02fa7ee82
-  role: EBS-drivers
+    - id: <ami-id>
+  role: <role-name>
   userData: |
     #!/bin/bash
     # fetch AWS metadata
@@ -35,7 +37,7 @@ spec:
           - "<ca-cert-hash>"
     nodeRegistration:
       name: ${NODE_NAME}
-      criSocket: "unix:///var/run/containerd/containerd.sock"
+      criSocket: "<cri-socket>"
       imagePullPolicy: IfNotPresent
       imagePullSerial: true
       taint: null
@@ -72,7 +74,7 @@ spec:
           values: ["2", "4"]
         - key: karpenter.k8s.aws/instance-memory
           operator: In
-          values: ["4", "8"]
+          values: ["4096", "8192"]
   limits:
     cpu: "1000"
     memory: "1000Gi"
