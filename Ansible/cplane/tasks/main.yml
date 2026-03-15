@@ -8,7 +8,7 @@
       - gpg
       - lsb-release
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Create directory for Docker apt key
   ansible.builtin.file:
@@ -28,13 +28,13 @@
     repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
     state: present
     filename: docker
-    update_cache: yes
+    update_cache: true
 
 - name: Install containerd
   ansible.builtin.apt:
     name: containerd.io
     state: present
-    update_cache: yes
+    update_cache: true
 
 - name: Configure docker to use systemd as the cgroup driver
   ansible.builtin.copy:
@@ -60,7 +60,7 @@
   ansible.builtin.service:
     name: containerd
     state: restarted
-    enabled: yes
+    enabled: true
 
 - name: Add Kubernetes GPG key
   ansible.builtin.get_url:
@@ -74,7 +74,7 @@
     repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' if ansible_architecture == 'aarch64' else ansible_architecture }} signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ k8s_version | default('v1.35') }}/deb/ /"
     state: present
     filename: kubernetes
-    update_cache: yes
+    update_cache: true
 
 - name: Install kubeadm, kubelet and kubectl
   ansible.builtin.apt:
@@ -83,4 +83,4 @@
       - kubelet
       - kubectl
     state: present
-    update_cache: yes
+    update_cache: true
