@@ -52,7 +52,7 @@
     mode: "0644"
 
 - name: Generate default containerd Configure
-  ansible.builtin.shell: containerd config default | sudo tee /etc/containerd/config.toml
+  ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
   args:
     creates: /etc/containerd/config.toml
 
@@ -68,16 +68,21 @@
     state: restarted
     enabled: true
 
+- name: Remove improperly formatted Kubernetes GPG key
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    state: absent
+
 - name: Add Kubernetes GPG key
   ansible.builtin.get_url:
     url: "https://pkgs.k8s.io/core:/stable:/{{ k8s_version | default('v1.35') }}/deb/Release.key"
-    dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
     mode: "0644"
-    force: false
+    force: true
 
 - name: Add Kubernetes APT repository
   ansible.builtin.apt_repository:
-    repo: "deb [arch={{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else 'arm64' if ansible_facts['architecture'] == 'aarch64' else ansible_facts['architecture'] }} signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ k8s_version | default('v1.35') }}/deb/ /"
+    repo: "deb [arch={{ 'amd64' if ansible_facts['architecture'] == 'x86_64' else 'arm64' if ansible_facts['architecture'] == 'aarch64' else ansible_facts['architecture'] }} signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/{{ k8s_version | default('v1.35') }}/deb/ /"
     state: present
     filename: kubernetes
     update_cache: true
