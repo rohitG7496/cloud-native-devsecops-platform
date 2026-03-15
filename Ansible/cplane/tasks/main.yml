@@ -51,6 +51,11 @@
       }
     mode: "0644"
 
+- name: Remove the existing containerd config
+  ansible.builtin.file:
+    path: /etc/containerd/config.toml
+    state: absent
+
 - name: Generate default containerd Configure
   ansible.builtin.shell: containerd config default > /etc/containerd/config.toml
   args:
