@@ -1,0 +1,39 @@
+---
+- name: Install HAProxy LB
+  ansible.builtin.apt:
+    name: haproxy
+    state: present
+
+- name: Ensure /etc/haproxy directory exists
+  ansible.builtin.file:
+    path: /etc/haproxy
+    state: directory
+    mode: "0755"
+
+- name: Configure HAProxy
+  ansible.builtin.copy:
+    dest: /etc/haproxy/haproxy.cfg
+    content: |
+      frontend k8s-frontend
+        bind *:6443
+        mode tcp
+        option tcplog
+        default_backend k8s-backend
+
+      backend k8s-backend
+        mode tcp
+        option tcp-check
+        balance roundrobin
+        server k8smaster1 {{ k8smaster1_pvt_ip }}:6443 check
+        server k8smaster2 {{ k8smaster2_pvt_ip }}:6443 check
+
+- name: Ensure HAProxy service is enabled and started
+  ansible.builtin.service:
+    name: haproxys
+    state: started
+    enabled: true
+
+- name: Restart HAProxy
+  ansible.builtin.service:
+    name: haproxys
+    state: restarted

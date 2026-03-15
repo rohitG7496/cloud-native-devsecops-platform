@@ -133,33 +133,32 @@
 - name: Disable swap
   ansible.builtin.command: swapoff -a
   changed_when: false
+#- name: Initialize Kubernetes Control Plane
+#  ansible.builtin.command: kubeadm init
+#  become: true
+#  args:
+#    creates: /etc/kubernetes/admin.conf
 
-- name: Initialize Kubernetes Control Plane
-  ansible.builtin.command: kubeadm init
-  become: true
-  args:
-    creates: /etc/kubernetes/admin.conf
+#- name: Create .kube directory for ubuntu user
+#  ansible.builtin.file:
+#    path: /home/ubuntu/.kube
+#    state: directory
+#    mode: "0755"
+#    owner: ubuntu
+#    group: ubuntu
 
-- name: Create .kube directory for ubuntu user
-  ansible.builtin.file:
-    path: /home/ubuntu/.kube
-    state: directory
-    mode: "0755"
-    owner: ubuntu
-    group: ubuntu
+#- name: Copy admin.conf to user's kube config
+#  ansible.builtin.copy:
+#    src: /etc/kubernetes/admin.conf
+#    dest: /home/ubuntu/.kube/config
+#    remote_src: true
+#    owner: ubuntu
+#    group: ubuntu
+#    mode: "0600"
 
-- name: Copy admin.conf to user's kube config
-  ansible.builtin.copy:
-    src: /etc/kubernetes/admin.conf
-    dest: /home/ubuntu/.kube/config
-    remote_src: true
-    owner: ubuntu
-    group: ubuntu
-    mode: "0600"
-
-- name: Install Calico network plugin
-  ansible.builtin.command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.31.4/manifests/calico.yaml
-  environment:
-    KUBECONFIG: /etc/kubernetes/admin.conf
-  register: calico_result
-  changed_when: '"created" in calico_result.stdout'
+#- name: Install Calico network plugin
+#  ansible.builtin.command: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.31.4/manifests/calico.yaml
+#  environment:
+#    KUBECONFIG: /etc/kubernetes/admin.conf
+#  register: calico_result
+#  changed_when: '"created" in calico_result.stdout'

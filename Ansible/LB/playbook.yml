@@ -1,0 +1,9 @@
+---
+- name: setup k8s control plane
+  hosts: localhost
+  connection: local
+  become: true
+  vars_files:
+    - LB/all
+  roles:
+    - role: LB
