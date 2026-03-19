@@ -14,6 +14,19 @@
   ansible.builtin.copy:
     dest: /etc/haproxy/haproxy.cfg
     content: |
+      global 
+        log /dev/log local0
+        log /dev/log local1 notice
+        daemon
+
+      defaults
+        log global
+        mode tcp
+        option tcplog
+        timeout connect 5000ms
+        timeout client 50000ms
+        timeout server 50000ms
+
       frontend k8s-frontend
         bind *:6443
         mode tcp
@@ -24,8 +37,19 @@
         mode tcp
         option tcp-check
         balance roundrobin
-        server k8smaster1 {{ k8smaster1_pvt_ip }}:6443 check
-        server k8smaster2 {{ k8smaster2_pvt_ip }}:6443 check
+        server k8smaster1 {{ k8smaster1_pvt_ip }}:6443 check fall 3 rise 2
+        server k8smaster2 {{ k8smaster2_pvt_ip }}:6443 check fall 3 rise 2
+
+      listen stats
+        bind *:8404
+        mode http
+        timeout connect 10s
+        timeout client 10s
+        timeout server 10s
+        stats enable
+        stats uri /stats
+        stats refresh 10s
+        stats auth admin:{{ haproxy_password }}
 
 - name: Ensure HAProxy service is enabled and started
   ansible.builtin.service:

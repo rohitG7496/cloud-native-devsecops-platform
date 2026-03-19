@@ -1,6 +1,62 @@
 # cloud-native-devsecops-platform
 This Project demonstrates production-grade Cloud Native DevSecOps platform with automated Kubernetes provisioning (kubeadm + Ansible ) on EC2, Vault-based External secrets mgmt, ArgoCD GitOps deployments, Karpenter autoscaling on a self-managed kubernetes kubeadm based cluster, and enterprise CI/CD pipelines demonstrating real-world architecture and lifecycle automation.
 
+## Ansible Setup for HAProxy and Kubeadm
+
+This project uses Ansible to automate the provisioning of the HAProxy Load Balancer and Kubernetes Control Plane dependencies.
+
+### 1. Setup HAProxy (Load Balancer)
+Edit the inventory/variables file to provide your infrastructure details:
+```bash
+vi Ansible/LB/all
+```
+Run the HAProxy playbook:
+```bash
+cd Ansible/LB
+ansible-playbook -i all playbook.yml
+```
+
+### 2. Setup Kubernetes Control Plane (kubeadm)
+Update the configuration variables for your control plane:
+```bash
+vi Ansible/cplane/all
+```
+Run the Control Plane playbook to install necessary components (kubelet, kubeadm, kubectl, containerd, etc.):
+```bash
+cd ../cplane
+ansible-playbook -i all playbook.yml
+```
+
+### 3. Kubeadm Master Node Initialization
+After the playbook completes successfully, initialize the Kubernetes control plane using the following command on master node:
+```bash
+sudo kubeadm init --control-plane-endpoint "<LB-PVT-IP>:6443" --upload-certs --apiserver-advertise-address="<pvt_of_master_node>" 
+```
+
+## HAProxy Monitoring
+
+The HAProxy server is configured with a stats monitoring page on port `8404`.
+
+### 1. Stats Access
+You can access the stats page directly at `http://<LB-PVT-IP>:8404/stats`.
+Use the credentials defined in [Ansible/LB/all](file:///Users/rohit_personal/Documents/cloud-native-devsecops-platform/Ansible/LB/all) (default: `admin:{{ haproxy_password }}`).
+
+### 2. Nginx Reverse Proxy (SSL)
+To expose the stats page via HTTPS with a domain, an Nginx configuration file is provided at `Ansible/LB/hproxy`. This includes SSL setup using Let's Encrypt certificates.
+
+## Verification
+
+### K8s High Availability (Master-Master)
+After initializing the control plane and joining the second master node, you can verify that both master nodes are in the `Ready` state:
+```bash
+kubectl get nodes
+```
+![Master-Master HA](<K8S /images/master-master-HA.png>)
+
+### 3. Monitoring Dashboard
+Below is the HAProxy monitoring dashboard:
+![HAProxy Monitoring](<K8S /images/HAProxy monitoring.png>)
+
 # Karpenter setup on Kubeadm Cluster
 
 > **Note:** Previously, Karpenter was not officially supported on non-EKS clusters, but it now has **full support for self-managed Kubeadm clusters**.
