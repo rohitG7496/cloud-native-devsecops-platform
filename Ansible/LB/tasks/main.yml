@@ -29,11 +29,11 @@
 
 - name: Ensure HAProxy service is enabled and started
   ansible.builtin.service:
-    name: haproxys
+    name: haproxy
     state: started
     enabled: true
 
 - name: Restart HAProxy
   ansible.builtin.service:
-    name: haproxys
+    name: haproxy
     state: restarted
