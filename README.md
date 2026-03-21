@@ -1,5 +1,5 @@
 # cloud-native-devsecops-platform
-This Project demonstrates production-grade Cloud Native DevSecOps platform with automated Kubernetes provisioning (kubeadm + Ansible ) on EC2, Vault-based External secrets mgmt, ArgoCD GitOps deployments, Karpenter autoscaling on a self-managed kubernetes kubeadm based cluster, and enterprise CI/CD pipelines demonstrating real-world architecture and lifecycle automation.
+This project demonstrates a production-grade Cloud Native DevSecOps platform with automated Kubernetes provisioning (kubeadm + Ansible) on AWS EC2, multi-master HA cluster architecture, Vault-based external secrets, ArgoCD GitOps deployments, Karpenter-based node autoscaling, HPA-driven application scaling, and enterprise CI/CD pipelines.
 
 ## Ansible Setup for HAProxy and Kubeadm
 
@@ -51,11 +51,25 @@ After initializing the control plane and joining the second master node, you can
 ```bash
 kubectl get nodes
 ```
-![Master-Master HA](<K8S /images/master-master-HA.png>)
+![Master-Master HA](</images/master-master-HA.png>)
 
 ### 3. Monitoring Dashboard
 Below is the HAProxy monitoring dashboard:
-![HAProxy Monitoring](<K8S /images/HAProxy monitoring.png>)
+![HAProxy Monitoring](</images/HAProxy monitoring.png>)
+
+## Install Add-ons
+### EBS CSI Driver
+IAM Permissions: Ensure your EC2 Worker Nodes have the AmazonEBSCSIDriverPolicy attached.
+Install Driver (using local folder):
+```bash
+kubectl apply -k ebs-csi-driver
+```
+
+### Cert-Manager
+Install cert-manager for certificate management:
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.12.0/cert-manager.yaml
+```
 
 # Karpenter setup on Kubeadm Cluster
 
@@ -133,7 +147,7 @@ You can observe the Karpenter controller logs to see it actively provisioning no
 ```bash
 kubectl logs -f -n karpenter -l app.kubernetes.io/name=karpenter -c controller
 ```
-![Karpenter Scaling Logs](<K8S /images/karpenter-scaling-logs.png>)
+![Karpenter Scaling Logs](</images/karpenter-scaling-logs.png>)
 
 ### Scaled Nodes and Pods
 Check the available nodes to see the newly provisioned instances joining the cluster. Then, verify that the pending pods are successfully scheduled and running on these new worker nodes:
@@ -141,4 +155,13 @@ Check the available nodes to see the newly provisioned instances joining the clu
 kubectl get nodes
 kubectl get po -n default -o wide
 ```
-![Scaled Nodes and Pods](<K8S /images/scaled-nodes-pods.png>)
+![Scaled Nodes and Pods](</images/scaled-nodes-pods.png>)
+
+## CI/CD Tools Setup for DevSecOps
+###  SonarQube Setup
+Deploy SonarQube using the provided manifest:
+```bash
+kubectl apply -f sonarqube.yml
+```
+Storage: Uses storageClassName: ebs-sc (ensure this SC exists or update manifest to match your EBS CSI setup).
+Access: https://sonar.jnrpro.solutions (Ensure DNS points to your Ingress Controller).

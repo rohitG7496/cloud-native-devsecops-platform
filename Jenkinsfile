@@ -9,10 +9,10 @@ pipeline {
   stages {
     stage('Git Clone') {
       steps {
-        git branch: 'main', url: 'https://github.com/rohitG7496/tradeIn-devsecops.git'
+        git branch: 'main', url: 'https://github.com/rohitG7496/tradeIn.git'
       }
     }
-    /*stage('Sonar Scan') {
+    stage('Sonar Scan') {
       steps {
         withSonarQubeEnv('sonar') {
           sh """
@@ -30,13 +30,13 @@ pipeline {
           waitForQualityGate abortPipeline: false
         }
       }
-    } */
-    /*stage('Trivy Package scanning') {
+    } 
+    stage('Trivy Package scanning') {
       steps {
         sh 'wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl'
         sh 'trivy fs --format template --template "@html.tpl" -o sca-report.html .'
       }
-    }   */
+    }  
     stage('Build Docker Frontend Image and Docker Image Scan Through Trivy ') {
       steps {
         sh """#!/bin/bash

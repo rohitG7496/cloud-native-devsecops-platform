@@ -1,0 +1,113 @@
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sonarqube
+  namespace: secops
+spec:
+  serviceName: "sonarqube"
+  selector:
+    matchLabels:
+      app: sonarqube
+  template:
+    metadata:
+      labels:
+        app: sonarqube
+    spec:
+      initContainers:
+        - name: busybox
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              chown -R 1000:1000 /opt/sonarqube/data
+              sysctl -w vm.max_map_count=262144
+              wget -O /opt/sonarqube/plugins/sonarqube-community-branch-plugin.jar https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/1.21.0/sonarqube-community-branch-plugin-1.21.0.jar
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: data
+              mountPath: /opt/sonarqube/data
+            - name: plugins
+              mountPath: /opt/sonarqube/plugins
+
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: sonarqube
+          image: sonarqube:lts
+          env:
+          securityContext:
+            runAsUser: 1000
+          ports:
+            - containerPort: 9000
+          resources:
+            limits:
+              memory: "4G"
+              cpu: "2.0"
+            requests:
+              memory: "1.5G"
+              cpu: "1.0"
+          volumeMounts:
+            - name: data
+              mountPath: /opt/sonarqube/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: ebs
+        resources:
+          requests:
+            storage: 5Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube
+  namespace: secops
+spec:
+  selector:
+    app: sonarqube
+  ports:
+    - port: 9000
+      targetPort: 9000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sonarqube
+  namespace: secops
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - sonar.rogaikwad.online
+      secretName: encrypt-tls
+  rules:
+    - host: sonar.rogaikwad.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sonarqube
+                port:
+                  number: 9000
