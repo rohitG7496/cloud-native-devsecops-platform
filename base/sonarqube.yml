@@ -23,6 +23,8 @@ spec:
       labels:
         app: sonarqube
     spec:
+      nodeSelector:
+        node: base
       initContainers:
         - name: busybox
           image: busybox
@@ -31,15 +33,16 @@ spec:
             - -c
             - |
               chown -R 1000:1000 /opt/sonarqube/data
+              chown -R 1000:1000 /opt/sonarqube/extensions/plugins
               sysctl -w vm.max_map_count=262144
-              wget -O /opt/sonarqube/plugins/sonarqube-community-branch-plugin.jar https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/1.21.0/sonarqube-community-branch-plugin-1.21.0.jar
+              wget -O /opt/sonarqube/extensions/plugins/sonarqube-community-branch-plugin.jar https://github.com/mc1arke/sonarqube-community-branch-plugin/releases/download/1.21.0/sonarqube-community-branch-plugin-1.21.0.jar
           securityContext:
             privileged: true
           volumeMounts:
             - name: data
               mountPath: /opt/sonarqube/data
             - name: plugins
-              mountPath: /opt/sonarqube/plugins
+              mountPath: /opt/sonarqube/extensions/plugins
 
       securityContext:
         fsGroup: 1000
@@ -72,6 +75,14 @@ spec:
         resources:
           requests:
             storage: 5Gi
+    - metadata:
+        name: plugins
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: ebs
+        resources:
+          requests:
+            storage: 2Gi
 
 ---
 apiVersion: v1
@@ -80,6 +91,7 @@ metadata:
   name: sonarqube
   namespace: base
 spec:
+  type: NodePort
   selector:
     app: sonarqube
   ports:
