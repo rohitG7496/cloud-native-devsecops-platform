@@ -61,6 +61,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /opt/sonarqube/data
+            - name: plugins
+              mountPath: /opt/sonarqube/extensions/plugins
   volumeClaimTemplates:
     - metadata:
         name: data
