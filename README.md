@@ -165,3 +165,72 @@ kubectl apply -f sonarqube.yml
 ```
 Storage: Uses storageClassName: ebs-sc (ensure this SC exists or update manifest to match your EBS CSI setup).
 Access: https://sonar.jnrpro.solutions (Ensure DNS points to your Ingress Controller).
+
+# External Secrets Operator Setup
+
+To securely manage secrets like database passwords and API keys from AWS Secrets Manager, we use the External Secrets Operator.
+
+## IAM Policy Requirements
+
+To allow the External Secrets Operator to fetch secrets from AWS, you must attach the following IAM policy to your worker node's IAM role (or use IRSA):
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:ListSecretVersionIds"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+## Install External Secrets Operator
+
+Add the Helm repository and install ESO:
+
+```bash
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo update
+
+helm install external-secrets \
+   external-secrets/external-secrets \
+   -n external-secrets \
+   --create-namespace \
+   --set installCRDs=true \
+   --wait
+```
+
+## Verify Installation
+
+Ensure the External Secrets Operator pods are running successfully:
+
+```bash
+kubectl get po -n external-secrets
+```
+![External Secrets Pods](</images/external-secrets-pods.png>)
+
+## Verify Secret Sync
+
+Verify that the `ExternalSecret` resource is successfully connected and syncing secrets from AWS Secrets Manager:
+
+```bash
+kubectl get externalsecret aws-tradein -n tradein
+```
+![External Secret Sync Status](</images/external-secret-sync.png>)
+
+## Verify Generated Secret
+
+Verify the actual Kubernetes Secret created by ESO:
+
+```bash
+kubectl get secret tradein-secrets -n tradein -o yaml
+```
+![Generated Secret Status](</images/tradein-secrets-yaml.png>)
