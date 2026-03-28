@@ -68,8 +68,8 @@ spec:
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: db-secret
-                  key: mysql_root_password
+                  name: tradein-secrets
+                  key: MYSQL_ROOT_PASSWORD
   volumeClaimTemplates:
     - metadata:
         name: data

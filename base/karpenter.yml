@@ -16,6 +16,8 @@ spec:
   amiSelectorTerms:
     - id: <ami-id>
   role: <role-name>
+  tags:
+    Name: "tradein-worker"
   userData: |
     #!/bin/bash
     # fetch AWS metadata
