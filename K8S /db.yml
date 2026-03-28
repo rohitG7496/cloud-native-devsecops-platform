@@ -12,7 +12,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql
-  namespace: base
+  namespace: tradein
 spec:
   selector:
     app: mysql
@@ -26,7 +26,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: mysql-ext
-  namespace: base
+  namespace: tradein
 spec:
   selector:
     app: mysql
@@ -39,7 +39,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: mysql
-  namespace: base
+  namespace: tradein
   labels:
     app: mysql
 spec:
@@ -54,7 +54,7 @@ spec:
         app: mysql
     spec:
       nodeSelector:
-        node: app
+        node: base
       containers:
         - name: mysql
           image: mysql:8.0
