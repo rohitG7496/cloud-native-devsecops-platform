@@ -116,7 +116,7 @@ To allow the Karpenter controller to provision nodes, you must attach the follow
 export CLUSTER_NAME="<YOUR-ClUSTER-NAME>"
 export KARPENTER_VERSION="1.9.0" # Check for latest
 export AWS_REGION="<AWS-REGION>"
-export CLUSTER_ENDPOINT="<CLUSTER-ENDPOINT>" # add your cluster endpoint
+export CLUSTER_ENDPOINT="<CLUSTER-ENDPOINT>" # Add your HAProxy PVT IP (eg. https://<HAProxy-PVT-IP>:6443)
 ```
 
 ## Install Karpenter
