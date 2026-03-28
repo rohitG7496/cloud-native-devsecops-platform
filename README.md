@@ -1,5 +1,5 @@
 # cloud-native-devsecops-platform
-This project demonstrates a production-grade Cloud Native DevSecOps platform with automated Kubernetes provisioning (kubeadm + Ansible) on AWS EC2, multi-master HA cluster architecture, Vault-based external secrets, ArgoCD GitOps deployments, Karpenter-based node autoscaling, HPA-driven application scaling, and enterprise CI/CD pipelines.
+This project demonstrates a production-grade Cloud Native DevSecOps platform with automated Kubernetes provisioning (kubeadm + Ansible) on AWS EC2, multi-master HA cluster architecture, External Secrets integration for fetching secrets from AWS Secrets Manager, ArgoCD GitOps deployments, Karpenter-based node autoscaling, HPA-driven application scaling, and enterprise CI/CD pipelines.
 
 ## Ansible Setup for HAProxy and Kubeadm
 
