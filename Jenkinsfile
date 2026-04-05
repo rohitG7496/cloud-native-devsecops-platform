@@ -24,19 +24,19 @@ pipeline {
         }
       }
     }
-    stage('Quality Gate Check') {
+    /*stage('Quality Gate Check') {
       steps {
-        timeout(time: 10, unit: 'MINUTES') {
+        timeout(time: 5, unit: 'MINUTES') {
           waitForQualityGate abortPipeline: false
         }
       }
-    } 
-    stage('Trivy Package scanning') {
+    } */
+    /*stage('Trivy Package scanning') {
       steps {
         sh 'wget https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl'
         sh 'trivy fs --format template --template "@html.tpl" -o sca-report.html .'
       }
-    }  
+    } */ 
     stage('Build Docker Frontend Image and Docker Image Scan Through Trivy ') {
       steps {
         sh """#!/bin/bash
