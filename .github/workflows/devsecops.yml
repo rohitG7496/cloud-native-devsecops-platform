@@ -1,0 +1,16 @@
+name: clone the tradein repo
+on: workflow_dispatch
+jobs:
+  clone: 
+    runs-on: ubuntu-latest
+    steps: 
+      - name: checkout tradein repo
+        uses: actions/checkout@v6
+        with: 
+          repository: rohitG7496/tradeIn
+          ref: main
+      - name: start frontend build
+        run: |
+          npm install -g snyk snyk-to-html
+          cd Frontend
+          npm install --legacy-peer-deps
