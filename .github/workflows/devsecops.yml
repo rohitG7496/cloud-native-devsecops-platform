@@ -22,5 +22,6 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_API_TOKEN }}
-        with:
-          args: --severity-threshold=high --file=Frontend/package.json
+        with: 
+          command: monitor
+          args: --file=Frontend/package.json --project-name="TradeIn-Frontend-GHA"
