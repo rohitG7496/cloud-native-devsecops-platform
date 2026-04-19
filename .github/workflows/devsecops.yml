@@ -1,5 +1,5 @@
-name: clone the tradein repo
-on: workflow_dispatch
+name: Tradein DevSecOps pipeline
+on: [push, workflow_dispatch]
 jobs:
   clone: 
     runs-on: ubuntu-latest
@@ -9,8 +9,18 @@ jobs:
         with: 
           repository: rohitG7496/tradeIn
           ref: main
-      - name: start frontend build
+      - name: setup node js 
+        uses: actions/setup-node@v4
+        with: 
+          node-version: 16
+      - name: install dependencies
         run: |
-          npm install -g snyk snyk-to-html
           cd Frontend
           npm install --legacy-peer-deps
+      - name: snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_API_TOKEN }}
+        with:
+          args: --severity-threshold=high
