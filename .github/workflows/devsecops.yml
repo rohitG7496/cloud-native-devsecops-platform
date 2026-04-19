@@ -23,4 +23,4 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_API_TOKEN }}
         with:
-          args: --severity-threshold=high
+          args: --severity-threshold=high --file=Frontend/package.json
