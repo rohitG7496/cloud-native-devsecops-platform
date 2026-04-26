@@ -1,23 +1,26 @@
 name: Tradein DevSecOps pipeline
 on: [push, workflow_dispatch]
 jobs:
-  clone: 
+  DevSecOps:
     runs-on: ubuntu-latest
     steps: 
-      - name: checkout tradein repo
+      - name: 1. checkout tradein repo
         uses: actions/checkout@v6
         with: 
           repository: rohitG7496/tradeIn
           ref: main
-      - name: setup node js 
+
+      - name: 2. setup node js 
         uses: actions/setup-node@v4
         with: 
-          node-version: 16
-      - name: install dependencies
+          node version: 16
+
+      - name: 3. install dependencies
         run: |
           cd Frontend
           npm install --legacy-peer-deps
-      - name: snyk security scan
+
+      - name: 4. snyk security scan
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
