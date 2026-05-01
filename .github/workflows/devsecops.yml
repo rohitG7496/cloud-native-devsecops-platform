@@ -20,6 +20,8 @@ jobs:
           cd Frontend
           npm install --legacy-peer-deps
           npm run build
+        env:
+          CI: false
       - name: Upload Build Folder
         uses: actions/upload-artifact@v4
         with:
