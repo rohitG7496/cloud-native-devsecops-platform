@@ -15,18 +15,19 @@ jobs:
         with: 
           node-version: 16
 
-      - name: 3. install dependencies
+      - name: 3. install dependencies and build
         run: |
           cd Frontend
           npm install --legacy-peer-deps
           npm run build
         env:
           CI: false
+          
       - name: Upload Build Folder
         uses: actions/upload-artifact@v4
         with:
           name: production-files 
-          path: dist/            
+          path: Frontend/build/
           retention-days: 1
 
   security-SCA-scan:
@@ -34,7 +35,7 @@ jobs:
     needs: Build-job
     steps: 
       - name: 1. Download Build Folder
-        uses: actions/download-artifact@v5 
+        uses: actions/download-artifact@v4
         with:
           name: production-files 
           path: app-to-scan      
