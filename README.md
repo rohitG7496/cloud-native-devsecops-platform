@@ -242,7 +242,6 @@ This guide provides step-by-step instructions to install and configure the AWS L
 ## 1. Prerequisites
 Before installing the AWS Load Balancer Controller, ensure you have:
 * An active Kubernetes cluster running on AWS.
-* `kubectl` installed and configured to communicate with the cluster.
 * Necessary IAM privileges to manage IAM policies and roles in your AWS account.
 * **Cert-Manager** installed in your cluster. The controller relies on cert-manager to generate certificate configurations for its webhooks.
 
@@ -270,17 +269,19 @@ The AWS Load Balancer Controller requires IAM permissions to make calls to AWS A
    ```
    *Take note of the Policy ARN returned by this command.*
 
-## 4. IAM Role & Service Account Configuration
-
-For a self-managed **Kubeadm cluster on AWS EC2**, the controller inherits permissions directly from the AWS IAM Instance Profile attached to your EC2 instances (master/worker nodes).
-
-### Step 1: Attach IAM Policy to the EC2 Instance Profile
-1. Open the **AWS IAM Console** and locate the IAM Role associated with your Kubernetes EC2 instances.
-2. Attach the `AWSLoadBalancerControllerIAMPolicy` created in the previous step to this IAM Role.
-
-### Step 2: Service Account Verification
-The installation manifest automatically creates the `aws-load-balancer-controller` Service Account in the `kube-system` namespace. There is no need to manually create or annotate it.
-
+## 4. Service Account & IAM Role Configuration
+Create a Kubernetes Service Account and associate it with the IAM Role.
+For clusters using IAM Roles for Service Accounts (IRSA):
+```bash
+eksctl create iamserviceaccount \
+  --cluster=kubernetes \
+  --namespace=kube-system \
+  --name=aws-load-balancer-controller \
+  --role-name AmazonEKSLoadBalancerControllerRole \
+  --attach-policy-arn=arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
+  --approve
+```
+*Note: If you are running on a self-managed Kubeadm cluster on EC2, you can attach the `AWSLoadBalancerControllerIAMPolicy` directly to the EC2 Instance Profile (IAM Role) associated with your Kubernetes nodes instead of using IRSA.*
 
 ## 5. Download and Configure the Controller Manifest
 1. Download the complete installation manifest:
@@ -290,14 +291,14 @@ The installation manifest automatically creates the `aws-load-balancer-controlle
 2. Edit the manifest file to configure the controller with cluster-specific details. Open `aws-alb-controller.yaml` and locate the `Deployment` spec for `aws-load-balancer-controller` container arguments.
 3. Update the container arguments to include your specific cluster details:
    ```yaml
-               - --cluster-name=kubernetes
-               - --aws-vpc-id=vpc-061e73c00667b2cae
-               - --aws-region=ap-south-1
+               - --cluster-name=<Your-K8S-Cluster-Name>
+               - --aws-vpc-id=<Your-VPC-ID>
+               - --aws-region=<AWS-Region>
    ```
    **Explanation of configuration changes:**
-   * `--cluster-name`: Specifies the name of your Kubernetes cluster (`kubernetes`).
-   * `--aws-vpc-id`: Specifies the target AWS VPC ID where the load balancers will be created (`vpc-061e73c00667b2cae`).
-   * `--aws-region`: Specifies the AWS region where your cluster resides (`ap-south-1`).
+   * `--cluster-name`: Specifies the name of your Kubernetes cluster (`<Your-K8S-Cluster-Name>`).
+   * `--aws-vpc-id`: Specifies the target AWS VPC ID where the load balancers will be created (`<Your-VPC-ID>`).
+   * `--aws-region`: Specifies the AWS region where your cluster resides (`<AWS-Region>`).
 
 ## 6. Controller Installation
 Apply the modified manifest to your Kubernetes cluster:
