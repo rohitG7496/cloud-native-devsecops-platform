@@ -234,3 +234,85 @@ Verify the actual Kubernetes Secret created by ESO:
 kubectl get secret tradein-secrets -n tradein -o yaml
 ```
 ![Generated Secret Status](</images/tradein-secrets-yaml.png>)
+
+# AWS Load Balancer Controller (ALB Ingress Controller) Setup
+
+This guide provides step-by-step instructions to install and configure the AWS Load Balancer Controller (ALB Ingress Controller) on the Kubernetes cluster.
+
+## 1. Prerequisites
+Before installing the AWS Load Balancer Controller, ensure you have:
+* An active Kubernetes cluster running on AWS.
+* `kubectl` installed and configured to communicate with the cluster.
+* Necessary IAM privileges to manage IAM policies and roles in your AWS account.
+* **Cert-Manager** installed in your cluster. The controller relies on cert-manager to generate certificate configurations for its webhooks.
+
+## 2. Install Cert-Manager
+Deploy the cert-manager manifest:
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.20.3/cert-manager.yaml
+```
+Verify that the cert-manager pods are up and running:
+```bash
+kubectl get pods -n cert-manager
+```
+
+## 3. Required IAM Permissions
+The AWS Load Balancer Controller requires IAM permissions to make calls to AWS APIs on your behalf.
+1. Download the IAM policy document:
+   ```bash
+   curl -s -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/main/docs/install/iam_policy.json
+   ```
+2. Create the IAM policy:
+   ```bash
+   aws iam create-policy \
+       --policy-name AWSLoadBalancerControllerIAMPolicy \
+       --policy-document file://iam_policy.json
+   ```
+   *Take note of the Policy ARN returned by this command.*
+
+## 4. IAM Role & Service Account Configuration
+
+For a self-managed **Kubeadm cluster on AWS EC2**, the controller inherits permissions directly from the AWS IAM Instance Profile attached to your EC2 instances (master/worker nodes).
+
+### Step 1: Attach IAM Policy to the EC2 Instance Profile
+1. Open the **AWS IAM Console** and locate the IAM Role associated with your Kubernetes EC2 instances.
+2. Attach the `AWSLoadBalancerControllerIAMPolicy` created in the previous step to this IAM Role.
+
+### Step 2: Service Account Verification
+The installation manifest automatically creates the `aws-load-balancer-controller` Service Account in the `kube-system` namespace. There is no need to manually create or annotate it.
+
+
+## 5. Download and Configure the Controller Manifest
+1. Download the complete installation manifest:
+   ```bash
+   curl -sL https://github.com/kubernetes-sigs/aws-load-balancer-controller/releases/download/v2.7.2/v2_7_2_full.yaml -o aws-alb-controller.yaml
+   ```
+2. Edit the manifest file to configure the controller with cluster-specific details. Open `aws-alb-controller.yaml` and locate the `Deployment` spec for `aws-load-balancer-controller` container arguments.
+3. Update the container arguments to include your specific cluster details:
+   ```yaml
+               - --cluster-name=kubernetes
+               - --aws-vpc-id=vpc-061e73c00667b2cae
+               - --aws-region=ap-south-1
+   ```
+   **Explanation of configuration changes:**
+   * `--cluster-name`: Specifies the name of your Kubernetes cluster (`kubernetes`).
+   * `--aws-vpc-id`: Specifies the target AWS VPC ID where the load balancers will be created (`vpc-061e73c00667b2cae`).
+   * `--aws-region`: Specifies the AWS region where your cluster resides (`ap-south-1`).
+
+## 6. Controller Installation
+Apply the modified manifest to your Kubernetes cluster:
+```bash
+kubectl apply -f aws-alb-controller.yaml
+```
+
+## 7. Verification Steps
+1. Verify that the AWS Load Balancer Controller pods are running successfully:
+   ```bash
+   kubectl get deployment -n kube-system aws-load-balancer-controller
+   kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+   ```
+2. Check the controller logs to ensure there are no errors:
+   ```bash
+   kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller -f
+   ```
+3. Test the setup by creating an Ingress resource utilizing the `alb` ingress class and ensure the controller provisions the AWS ALB resources as expected.
