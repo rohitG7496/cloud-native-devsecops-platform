@@ -3,16 +3,16 @@ on: [push, workflow_dispatch]
 jobs:
   Build-and-Scan:
     runs-on: ubuntu-latest
-    steps: 
+    steps:
       - name: 1. checkout tradein repo
         uses: actions/checkout@v6
-        with: 
+        with:
           repository: rohitG7496/tradeIn
           ref: main
 
-      - name: 2. setup node js 
+      - name: 2. setup node js
         uses: actions/setup-node@v4
-        with: 
+        with:
           node-version: 16
 
       - name: 3. install dependencies
@@ -20,15 +20,15 @@ jobs:
           cd Frontend
           npm install --legacy-peer-deps
         env:
-          CI: false
+          CI: true
 
       - name: 4. Run Snyk Security Scan
         run: |
           cd Frontend
-          npx snyk test --severity-threshold=high || true
+          npx snyk test --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          
+
       - name: 5. Build Application
         if: failure()
         run: |
