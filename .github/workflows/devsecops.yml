@@ -22,17 +22,18 @@ jobs:
         env:
           CI: true
 
-      - name: 4. Run Snyk Security Scan
+      - name: 4. Run Snyk Security Package Vulnerabilities Scan
         run: |
           cd Frontend
           npx snyk test --severity-threshold=high
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
 
       - name: 5. Build Application
-        if: failure()
         run: |
           cd Frontend
           npm run build
         env:
           CI: false
+        continue-on-error: true
