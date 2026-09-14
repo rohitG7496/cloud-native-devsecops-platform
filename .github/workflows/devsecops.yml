@@ -1,5 +1,16 @@
 name: Tradein DevSecOps pipeline
 on: [push, workflow_dispatch]
+
+# required to fetch the OIDC JWT token
+permissions:
+  id-token: write # Required to request the OIDC JWT from GitHub
+  contents: read # Required to check out repository code
+
+env:
+  AWS_REGION: ap-south-1
+  ROLE_ARN: arn:aws:iam::564186749794:role/GitHubActions-TradeIn-Role
+  ECR_REPOSITORY: tradein
+
 jobs:
   Build-and-Scan:
     runs-on: ubuntu-latest
@@ -37,3 +48,30 @@ jobs:
         env:
           CI: false
         continue-on-error: true
+
+      - name: 6. Authenticate to AWS via OIDC
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ env.ROLE_ARN }}
+          role-session-name: GitHubActionsSession
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 7. Login to ECR repo
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 8. Build the Docker image
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "Building frontend image"
+          cd Frontend
+          docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+
+          echo "tagging image as latest"
+          docker tag $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $REGISTRY/$ECR_REPOSITORY:latest
+
+          echo "Pushing to ECR"
+          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $REGISTRY/$ECR_REPOSITORY:latest
