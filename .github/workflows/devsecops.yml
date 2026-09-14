@@ -9,7 +9,7 @@ permissions:
 env:
   AWS_REGION: ap-south-1
   ROLE_ARN: arn:aws:iam::564186749794:role/GitHubActions-TradeIn-Role
-  ECR_REPOSITORY: frontend
+  ECR_REPOSITORY: tradein
 
 jobs:
   Build-and-Scan:
@@ -60,20 +60,16 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: 8. Build the Docker image
+      - name: 8. Build and Push Frontend Docker image to ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: frontend-${{ github.sha }}
         run: |
           echo "Building frontend image"
           cd Frontend
-          docker build -t frontend:$IMAGE_TAG .
-
-          echo "Tagging image locally and for ECR"
-          docker tag frontend:$IMAGE_TAG frontend:latest
-          docker tag frontend:$IMAGE_TAG $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker tag frontend:$IMAGE_TAG $REGISTRY/$ECR_REPOSITORY:latest
+          docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $REGISTRY/$ECR_REPOSITORY:frontend-latest
 
           echo "Pushing to ECR"
           docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $REGISTRY/$ECR_REPOSITORY:latest
+          docker push $REGISTRY/$ECR_REPOSITORY:frontend-latest
