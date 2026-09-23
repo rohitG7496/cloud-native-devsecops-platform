@@ -10,18 +10,18 @@ spec:
     matchLabels:
       app: backend
   template:
-    labels:
-      metadata:
-        name: backend
+    metadata:
+      labels:
+        app: backend
     spec:
-      NodeSelector:
+      nodeSelector:
         node: base
+      imagePullSecrets:
+        - name: ecr-cred
       containers:
         - name: backend
           image: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:backend-720ee98df460100e4d987fbc34ea85dc9908776b
           imagePullPolicy: Always
-          imagePullSecrets:
-            - name: ecr-cred
           ports:
             - containerPort: 8000
           envFrom:
