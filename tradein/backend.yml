@@ -56,20 +56,21 @@ metadata:
   name: backend
   namespace: tradein
   annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/group.name: cloud-native
     alb.ingress.kubernetes.io/target-type: instance
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-south-1:564186749794:certificate/77d02811-8618-4599-ac00-af39d2506a83
     alb.ingress.kubernetes.io/ssl-redirect: "443"
     alb.ingress.kubernetes.io/group.order: "6"
-    alb.ingress.kubernetes.io/backend-protocol: "HTTP"
+    alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   ingressClassName: alb
   rules:
     - host: tradein.rogaikwad.online
       http:
         paths:
-          - path: /api/v1/
+          - path: /api/*
             pathType: Prefix
             backend:
               service:
