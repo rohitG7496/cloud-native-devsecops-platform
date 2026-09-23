@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: argocd
+  annotations:
+    alb.ingress.kubernetes.io/load-balancer-name: public-LB
+    alb.ingress.kubernetes.io/group.name: cloud-native
+    alb.ingress.kubernetes.io/target-type: instance
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-south-1:564186749794:certificate/77d02811-8618-4599-ac00-af39d2506a83
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/group.order: "4"
+    alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    alb.ingress.kubernetes.io/nodes: "node=base"
+spec:
+  ingressClassName: alb
+  rules:
+    - host: argocd.rogaikwad.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 443

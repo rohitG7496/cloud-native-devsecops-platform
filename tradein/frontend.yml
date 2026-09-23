@@ -1,0 +1,75 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: tradein
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      NodeSelector:
+        node: base
+      containers:
+        - name: frontend
+          image: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:frontend-720ee98df460100e4d987fbc34ea85dc9908776b
+          imagePullSecrets:
+            - name: ecr-cred
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-svc
+  namespace: tradein
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend
+  namespace: tradein
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: instance
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/group.name: cloud-native
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-south-1:564186749794:certificate/77d02811-8618-4599-ac00-af39d2506a83
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    alb.ingress.kubernetes.io/backend-protocol-version: "HTTPS"
+spec:
+  ingressClassName: alb
+  rules:
+    - host: tradein.rogaikwad.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-svc
+                port:
+                  number: 80
