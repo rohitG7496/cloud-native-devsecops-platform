@@ -59,8 +59,7 @@ metadata:
     alb.ingress.kubernetes.io/group.name: cloud-native
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-south-1:564186749794:certificate/77d02811-8618-4599-ac00-af39d2506a83
     alb.ingress.kubernetes.io/ssl-redirect: "443"
-    alb.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    alb.ingress.kubernetes.io/backend-protocol-version: "HTTPS"
+    alb.ingress.kubernetes.io/backend-protocol: "HTTP"
 spec:
   ingressClassName: alb
   rules:
