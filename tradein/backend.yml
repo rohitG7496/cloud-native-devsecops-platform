@@ -20,7 +20,7 @@ spec:
         - name: ecr-cred
       containers:
         - name: backend
-          image: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:backend-75eb386968eb281c0176303266b26bda7f1ffb03
+          image: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:backend-latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8000

@@ -66,27 +66,21 @@ jobs:
       - name: 8. Build and Push Frontend Docker image to ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: frontend-${{ github.sha }}
         run: |
           echo "Building frontend image"
           cd Frontend
-          docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $REGISTRY/$ECR_REPOSITORY:frontend-latest
+          docker build -t $REGISTRY/$ECR_REPOSITORY:frontend-latest .
 
           echo "Pushing to ECR"
-          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $REGISTRY/$ECR_REPOSITORY:frontend-latest
 
       - name: 9. Build and Push Backend Docker image to ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: backend-${{ github.sha }}
         run: |
           echo "Building backend image"
           cd Backend
-          docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $REGISTRY/$ECR_REPOSITORY:backend-latest
+          docker build -t $REGISTRY/$ECR_REPOSITORY:backend-latest .
 
           echo "Pushing to ECR"
-          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $REGISTRY/$ECR_REPOSITORY:backend-latest
