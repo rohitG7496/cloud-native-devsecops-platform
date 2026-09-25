@@ -20,7 +20,7 @@ spec:
         - name: ecr-cred
       containers:
         - name: frontend
-          image: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:frontend-720ee98df460100e4d987fbc34ea85dc9908776b
+          image: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:frontend-1cb8a3ddafbcee914c3368c72c3e7220fed1e684
           imagePullPolicy: Always
           ports:
             - containerPort: 80
