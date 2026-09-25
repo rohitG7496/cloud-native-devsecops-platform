@@ -1,5 +1,8 @@
 name: Tradein DevSecOps pipeline
-on: [push, workflow_dispatch]
+on:
+  repository_dispatch:
+    types: [tradein-pr-merged]
+  workflow_dispatch:
 
 # required to fetch the OIDC JWT token
 permissions:
