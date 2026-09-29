@@ -73,8 +73,15 @@ spec:
     - host: tradein.rogaikwad.online
       http:
         paths:
-          - path: /api
+          - path: /api/
             pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 80
+          - path: /ping
+            pathType: Exact
             backend:
               service:
                 name: backend
