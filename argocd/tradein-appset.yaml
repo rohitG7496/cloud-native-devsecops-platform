@@ -15,7 +15,7 @@ spec:
     spec:
       project: default
       source:
-        repoURL: https://github.com/rohit57496/cloud-native-devsecops-platform
+        repoURL: git@github.com:rohitG7496/cloud-native-devsecops-platform.git
         targetRevision: main
         path: tradein             # Points to the tradein/ directory
         directory:
