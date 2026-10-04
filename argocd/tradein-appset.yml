@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: tradein-appset
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - app: frontend
+          - app: backend
+  template:
+    metadata:
+      name: "tradein-{{app}}"  
+    spec:
+      project: default
+      source:
+        repoURL: git@github.com:rohitG7496/cloud-native-devsecops-platform.git
+        targetRevision: main
+        path: tradein             # Points to the tradein/ directory
+        directory:
+          include: "{{app}}.yml" # Only picks up frontend.yml OR backend.yml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: tradein
+      syncPolicy:
+        automated:
+          selfHeal: true   
+        syncOptions:
+          - CreateNamespace=true
