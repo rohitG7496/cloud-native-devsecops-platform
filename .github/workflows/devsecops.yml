@@ -69,9 +69,13 @@ jobs:
         run: |
           echo "Building frontend image"
           cd Frontend
-          docker build -t $REGISTRY/$ECR_REPOSITORY:frontend-latest .
+          # Build once, tag with both versioned and latest tags
+          docker build -t $REGISTRY/$ECR_REPOSITORY:frontend-${{ github.run_number }} \
+                       -t $REGISTRY/$ECR_REPOSITORY:frontend-latest .
 
-          echo "Pushing to ECR"
+          # Push versioned tag — Image Updater tracks this
+          docker push $REGISTRY/$ECR_REPOSITORY:frontend-${{ github.run_number }}
+          # Push latest tag — used as the base image reference in frontend.yml
           docker push $REGISTRY/$ECR_REPOSITORY:frontend-latest
 
       - name: 9. Build and Push Backend Docker image to ECR
@@ -80,7 +84,11 @@ jobs:
         run: |
           echo "Building backend image"
           cd Backend
-          docker build -t $REGISTRY/$ECR_REPOSITORY:backend-latest .
+          # Build once, tag with both versioned and latest tags
+          docker build -t $REGISTRY/$ECR_REPOSITORY:backend-${{ github.run_number }} \
+                       -t $REGISTRY/$ECR_REPOSITORY:backend-latest .
 
-          echo "Pushing to ECR"
+          # Push versioned tag — Image Updater tracks this
+          docker push $REGISTRY/$ECR_REPOSITORY:backend-${{ github.run_number }}
+          # Push latest tag — used as the base image reference in backend.yml
           docker push $REGISTRY/$ECR_REPOSITORY:backend-latest
