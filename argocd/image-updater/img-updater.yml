@@ -1,4 +1,7 @@
 ---
+# ArgoCD Image Updater - ConfigMap
+# Controls polling interval, log level, and ECR registry config
+# Credentials sourced from aws-ecr-creds secret (managed by ESO)
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,9 +10,11 @@ metadata:
 data:
   # How often Image Updater polls ECR for new image tags
   interval: 2m
-  # Log level: use "debug" initially to verify ECR connectivity, then switch to "info"
+
+  # Log level: use "debug" first to verify ECR connectivity, then switch to "info"
   log.level: info
-  # ECR registry configuration
+
+  # ECR private registry configuration
   registries.conf: |
     registries:
     - name: ECR
@@ -18,31 +23,3 @@ data:
       ping: false
       insecure: false
       credsexpire: 10h
-
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: argocd-image-updater
-  namespace: argocd
-spec:
-  template:
-    spec:
-      containers:
-        - name: argocd-image-updater
-          env:
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: aws-ecr-creds   
-                  key: aws_access_key_id
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: aws-ecr-creds
-                  key: aws_secret_access_key
-            - name: AWS_REGION
-              valueFrom:
-                secretKeyRef:
-                  name: aws-ecr-creds
-                  key: aws_region
