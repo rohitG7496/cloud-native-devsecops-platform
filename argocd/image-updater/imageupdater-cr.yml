@@ -1,0 +1,42 @@
+---
+# ArgoCD Image Updater CR (CRD-based v1alpha1)
+# Watches ECR for new frontend and backend image tags
+# Writes back updated tags to Git via SSH key stored in aws-ecr-creds secret
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: tradein-image-updater
+  namespace: argocd
+spec:
+  # Global update strategy — can be overridden per image
+  commonUpdateSettings:
+    updateStrategy: latest         # Pick the latest tag matching allowTags pattern
+    pullSecret: aws-ecr-creds      # Secret with ECR credentials (created by ESO)
+
+  # Global write-back config — commit updated tags back to Git
+  writeBackConfig:
+    method: git
+    gitConfig:
+      repository: git@github.com:rohitG7496/cloud-native-devsecops-platform.git
+      branch: main
+      writeBackTarget: "kustomization:tradein"   # Write to tradein/ directory
+
+  # Which ArgoCD Applications to manage and which images to track
+  applicationRefs:
+    # --- Frontend Application ---
+    - namePattern: tradein-frontend   # Must match ArgoCD Application name exactly
+      images:
+        - alias: frontend             # Unique alias within this applicationRef
+          imageName: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:frontend-latest
+          commonUpdateSettings:
+            updateStrategy: latest
+            allowTags: "^frontend-"   # Only consider tags starting with "frontend-"
+
+    # --- Backend Application ---
+    - namePattern: tradein-backend    # Must match ArgoCD Application name exactly
+      images:
+        - alias: backend
+          imageName: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:backend-latest
+          commonUpdateSettings:
+            updateStrategy: latest
+            allowTags: "^backend-"    # Only consider tags starting with "backend-"
