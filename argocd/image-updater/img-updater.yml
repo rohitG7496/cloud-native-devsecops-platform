@@ -29,15 +29,8 @@ data:
       prefix: 564186749794.dkr.ecr.ap-south-1.amazonaws.com
       ping: false
       insecure: false
-      credentials: ext:/app/config/ecr-creds.sh
+      credentials: ext:/app/ecr-creds.sh
       credsexpire: 10h
-
-  # Shell script called by Image Updater to get ECR token
-  # Mounted into the container at /app/config/ecr-creds.sh via the image-updater-conf volume
-  # Output format must be: "AWS:<token>" (basic auth username:password)
-  ecr-creds.sh: |
-    #!/bin/sh
-    aws ecr get-login-password --region ap-south-1
 
 ---
 # ============================================================
