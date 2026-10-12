@@ -51,12 +51,14 @@ spec:
 
   # Global write-back config — commit updated tags back to Git via SSH
   # SSH key is stored in argocd-image-updater-ssh-key secret (created by ESO)
+  # write-back method: argocd writes a .argocd-source-<appname>.yaml override file
+  # into the tradein/ directory. Plain YAML apps do not need kustomization.yaml.
   writeBackConfig:
     method: git
     gitConfig:
       repository: git@github.com:rohitG7496/cloud-native-devsecops-platform.git
       branch: main
-      writeBackTarget: "kustomization:tradein"   # Write overrides to tradein/ directory
+      writeBackTarget: "tradein"   # Plain directory path — no kustomize prefix
 
   # Which ArgoCD Applications to manage and which images to track
   applicationRefs:
