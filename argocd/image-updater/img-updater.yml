@@ -1,7 +1,11 @@
 ---
+# ============================================================
 # ArgoCD Image Updater - ConfigMap
 # Controls polling interval, log level, and ECR registry config
-# Credentials sourced from aws-ecr-creds secret (managed by ESO)
+# ECR auth: EC2 Instance Profile (no static credentials needed)
+# AWS SDK automatically reads credentials from IMDS (169.254.169.254)
+# Note: IMDS hop limit must be set to 2 on EC2 nodes for pods to reach IMDS
+# ============================================================
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -14,7 +18,8 @@ data:
   # Log level: use "debug" first to verify ECR connectivity, then switch to "info"
   log.level: info
 
-  # ECR private registry configuration
+  # ECR registry — no credentials block needed when using EC2 Instance Profile
+  # AWS SDK automatically gets temporary credentials from 169.254.169.254
   registries.conf: |
     registries:
     - name: ECR
@@ -23,3 +28,49 @@ data:
       ping: false
       insecure: false
       credsexpire: 10h
+
+---
+# ============================================================
+# ArgoCD Image Updater - ImageUpdater CR (CRD-based v1alpha1)
+# Watches ECR for new frontend and backend image tags
+# ECR auth: EC2 Instance Profile (no static credentials needed)
+# Git write-back: SSH key from argocd-image-updater-ssh-key secret (managed by ESO)
+# ============================================================
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: tradein-image-updater
+  namespace: argocd
+spec:
+  # Global update strategy — can be overridden per image
+  commonUpdateSettings:
+    updateStrategy: newest-build   # "latest" was renamed to "newest-build" in this version
+
+  # Global write-back config — commit updated tags back to Git via SSH
+  # SSH key is stored in argocd-image-updater-ssh-key secret (created by ESO)
+  writeBackConfig:
+    method: git
+    gitConfig:
+      repository: git@github.com:rohitG7496/cloud-native-devsecops-platform.git
+      branch: main
+      writeBackTarget: "kustomization:tradein"   # Write overrides to tradein/ directory
+
+  # Which ArgoCD Applications to manage and which images to track
+  applicationRefs:
+    # --- Frontend Application ---
+    - namePattern: tradein-frontend   # Must match ArgoCD Application name exactly
+      images:
+        - alias: frontend             # Unique alias within this applicationRef
+          imageName: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:frontend-latest
+          commonUpdateSettings:
+            updateStrategy: newest-build
+            allowTags: "regexp:^frontend-"   # Only track tags starting with "frontend-"
+
+    # --- Backend Application ---
+    - namePattern: tradein-backend    # Must match ArgoCD Application name exactly
+      images:
+        - alias: backend
+          imageName: 564186749794.dkr.ecr.ap-south-1.amazonaws.com/tradein:backend-latest
+          commonUpdateSettings:
+            updateStrategy: newest-build
+            allowTags: "regexp:^backend-"    # Only track tags starting with "backend-"
