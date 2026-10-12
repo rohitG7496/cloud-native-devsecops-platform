@@ -18,8 +18,11 @@ data:
   # Log level: use "debug" first to verify ECR connectivity, then switch to "info"
   log.level: info
 
-  # ECR registry — no credentials block needed when using EC2 Instance Profile
-  # AWS SDK automatically gets temporary credentials from 169.254.169.254
+  # ECR registry config
+  # credentials: uses the built-in ECR credential helper via "ext:" prefix
+  # ext:/usr/local/bin/aws-ecr-get-login tells Image Updater to run a script
+  # that calls "aws ecr get-login-password" to get a fresh ECR token
+  # The AWS SDK inside that script reads creds from EC2 Instance Profile via IMDS
   registries.conf: |
     registries:
     - name: ECR
@@ -27,6 +30,7 @@ data:
       prefix: 564186749794.dkr.ecr.ap-south-1.amazonaws.com
       ping: false
       insecure: false
+      credentials: ext:/usr/bin/aws ecr get-login-password --region ap-south-1
       credsexpire: 10h
 
 ---
