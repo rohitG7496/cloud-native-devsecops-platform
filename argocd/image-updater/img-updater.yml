@@ -19,10 +19,9 @@ data:
   log.level: info
 
   # ECR registry config
-  # credentials: uses the built-in ECR credential helper via "ext:" prefix
-  # ext:/usr/local/bin/aws-ecr-get-login tells Image Updater to run a script
-  # that calls "aws ecr get-login-password" to get a fresh ECR token
-  # The AWS SDK inside that script reads creds from EC2 Instance Profile via IMDS
+  # credentials: uses a shell script wrapper for "aws ecr get-login-password"
+  # ext: only accepts a single executable path — no inline arguments allowed
+  # The script calls aws CLI which reads credentials from EC2 Instance Profile via IMDS
   registries.conf: |
     registries:
     - name: ECR
@@ -30,8 +29,15 @@ data:
       prefix: 564186749794.dkr.ecr.ap-south-1.amazonaws.com
       ping: false
       insecure: false
-      credentials: ext:/usr/bin/aws ecr get-login-password --region ap-south-1
+      credentials: ext:/app/config/ecr-creds.sh
       credsexpire: 10h
+
+  # Shell script called by Image Updater to get ECR token
+  # Mounted into the container at /app/config/ecr-creds.sh via the image-updater-conf volume
+  # Output format must be: "AWS:<token>" (basic auth username:password)
+  ecr-creds.sh: |
+    #!/bin/sh
+    aws ecr get-login-password --region ap-south-1
 
 ---
 # ============================================================
