@@ -3,11 +3,16 @@ on:
   repository_dispatch:
     types: [tradein-pr-merged]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Semantic version tag (e.g. v1.0.0). Leave empty to auto-increment patch.'
+        required: false
+        default: ''
 
 # required to fetch the OIDC JWT token
 permissions:
-  id-token: write # Required to request the OIDC JWT from GitHub
-  contents: read # Required to check out repository code
+  id-token: write   # Required to request the OIDC JWT from GitHub
+  contents: write   # Required to create and push Git tags
 
 env:
   AWS_REGION: ap-south-1
@@ -63,32 +68,92 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: 8. Build and Push Frontend Docker image to ECR
+      - name: 8. Generate semantic version tag
+        id: version
+        run: |
+          # If version was manually provided via workflow_dispatch input, use it
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+            echo "Using manually provided version: $VERSION"
+          else
+            # Auto-increment: fetch latest tag from ECR and bump the patch version
+            # List all backend tags matching vX.Y.Z pattern and find the highest
+            LATEST=$(aws ecr describe-images \
+              --repository-name $ECR_REPOSITORY \
+              --region $AWS_REGION \
+              --query 'imageDetails[*].imageTags[*]' \
+              --output text | tr '\t' '\n' | grep -E '^backend-v[0-9]+\.[0-9]+\.[0-9]+$' | \
+              sed 's/backend-//' | sort -V | tail -1)
+
+            if [ -z "$LATEST" ]; then
+              # No existing semver tags found — start from v1.0.0
+              VERSION="v1.0.0"
+            else
+              # Bump patch version: v1.2.3 → v1.2.4
+              MAJOR=$(echo $LATEST | cut -d. -f1 | tr -d 'v')
+              MINOR=$(echo $LATEST | cut -d. -f2)
+              PATCH=$(echo $LATEST | cut -d. -f3)
+              VERSION="v$MAJOR.$MINOR.$((PATCH + 1))"
+            fi
+            echo "Auto-incremented version: $VERSION"
+          fi
+
+          # Export version for use in subsequent steps
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: 9. Build and Push Frontend Docker image to ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          VERSION: ${{ steps.version.outputs.VERSION }}
         run: |
-          echo "Building frontend image"
+          echo "Building frontend image — $VERSION"
           cd Frontend
-          # Build once, tag with both versioned and latest tags
-          docker build -t $REGISTRY/$ECR_REPOSITORY:frontend-${{ github.run_number }} \
+          # Build once, tag with both semver and latest
+          docker build -t $REGISTRY/$ECR_REPOSITORY:frontend-$VERSION \
                        -t $REGISTRY/$ECR_REPOSITORY:frontend-latest .
 
-          # Push versioned tag — Image Updater tracks this
-          docker push $REGISTRY/$ECR_REPOSITORY:frontend-${{ github.run_number }}
-          # Push latest tag — used as the base image reference in frontend.yml
+          # Push semver tag — Image Updater tracks this
+          docker push $REGISTRY/$ECR_REPOSITORY:frontend-$VERSION
+          # Push latest — used as base image reference in frontend.yml
           docker push $REGISTRY/$ECR_REPOSITORY:frontend-latest
 
-      - name: 9. Build and Push Backend Docker image to ECR
+      - name: 10. Build and Push Backend Docker image to ECR
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          VERSION: ${{ steps.version.outputs.VERSION }}
         run: |
-          echo "Building backend image"
+          echo "Building backend image — $VERSION"
           cd Backend
-          # Build once, tag with both versioned and latest tags
-          docker build -t $REGISTRY/$ECR_REPOSITORY:backend-${{ github.run_number }} \
+          # Build once, tag with both semver and latest
+          docker build -t $REGISTRY/$ECR_REPOSITORY:backend-$VERSION \
                        -t $REGISTRY/$ECR_REPOSITORY:backend-latest .
 
-          # Push versioned tag — Image Updater tracks this
-          docker push $REGISTRY/$ECR_REPOSITORY:backend-${{ github.run_number }}
-          # Push latest tag — used as the base image reference in backend.yml
+          # Push semver tag — Image Updater tracks this
+          docker push $REGISTRY/$ECR_REPOSITORY:backend-$VERSION
+          # Push latest — used as base image reference in backend.yml
           docker push $REGISTRY/$ECR_REPOSITORY:backend-latest
+
+      - name: 11. Create and push Git tag on cloud-native repo
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+          # PAT with contents:write scope on the cloud-native-devsecops-platform repo
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          # Configure git identity for the tag commit
+          git config --global user.email "ci@github-actions"
+          git config --global user.name "GitHub Actions"
+
+          # Clone the infra repo (this pipeline runs in tradeIn repo context)
+          git clone https://$GH_PAT@github.com/rohitG7496/cloud-native-devsecops-platform.git infra
+          cd infra
+
+          # Create an annotated tag with release notes
+          git tag -a "$VERSION" -m "Release $VERSION
+          - Frontend image: $ECR_REPOSITORY:frontend-$VERSION
+          - Backend image:  $ECR_REPOSITORY:backend-$VERSION
+          - Pipeline run:   ${{ github.run_number }}
+          - Triggered by:   ${{ github.actor }}"
+
+          # Push the tag
+          git push origin "$VERSION"
+          echo "Git tag $VERSION pushed to cloud-native-devsecops-platform"
