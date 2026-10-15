@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Plain YAML resources — no patches or overlays needed
+# Adding this file enables ArgoCD Image Updater git write-back
+# Image Updater will create .argocd-source-<appname>.yaml in this directory
+# to override image tags without modifying these files directly
+resources:
+  - frontend.yml
+  - backend.yml
+  - db.yml

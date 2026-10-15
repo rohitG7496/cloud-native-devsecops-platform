@@ -49,16 +49,12 @@ spec:
   commonUpdateSettings:
     updateStrategy: newest-build   # "latest" was renamed to "newest-build" in this version
 
-  # Global write-back config — commit updated tags back to Git via SSH
-  # SSH key is stored in argocd-image-updater-ssh-key secret (created by ESO)
-  # write-back method: argocd writes a .argocd-source-<appname>.yaml override file
-  # into the tradein/ directory. Plain YAML apps do not need kustomization.yaml.
+  # Write-back method: argocd (direct in-cluster update)
+  # Git write-back is not supported for plain Directory source type apps.
+  # Image Updater patches the ArgoCD Application object directly.
+  # ArgoCD then syncs the updated image tag to the cluster.
   writeBackConfig:
-    method: git
-    gitConfig:
-      repository: git@github.com:rohitG7496/cloud-native-devsecops-platform.git
-      branch: main
-      writeBackTarget: "tradein"   # Plain directory path — no kustomize prefix
+    method: argocd
 
   # Which ArgoCD Applications to manage and which images to track
   applicationRefs:
