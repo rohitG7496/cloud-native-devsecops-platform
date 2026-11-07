@@ -1,0 +1,67 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: main-app-gateway
+  namespace: default
+spec:
+  gatewayClassName: eg-ec2-class
+  listeners:
+    # Keep HTTP open so Let's Encrypt can solve the HTTP-01 challenge
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
+    # Add the HTTPS listener for Argo CD
+    - name: https-argocd
+      protocol: HTTPS
+      port: 443
+      hostname: "argocd.rogaikwad.online"
+      tls:
+        mode: Terminate
+        certificateRefs:
+        - name: argocd-tls-secret   # cert-manager will create this secret automatically
+      allowedRoutes:
+        namespaces:
+          from: All
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: argocd-route
+  namespace: argocd
+  annotations:
+    # ADD THIS HERE: Triggers cert-manager to issue the certificate
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  parentRefs:
+    - name: main-app-gateway
+      namespace: default
+  hostnames:
+    - "argocd.rogaikwad.online"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: argocd-server
+          port: 80
+
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-tls-certificate
+  namespace: default
+spec:
+  # This is the secret your Gateway is looking for
+  secretName: argocd-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+    - "argocd.rogaikwad.online"
